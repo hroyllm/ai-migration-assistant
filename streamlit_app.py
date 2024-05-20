@@ -1,52 +1,153 @@
+# Import python packages
 import streamlit as st
+import pandas as pd
+import json
+import os
 
-# Main menu items
-main_menu = ["Home", "Settings", "About"]
+#from snowflake.snowpark.context import get_active_session
+from snowflake.snowpark import Session
 
-# Render the main menu in the sidebar
-selected_main_menu = st.sidebar.radio("Main Menu", main_menu)
+st.set_page_config(
+    page_title="Snowflake LLM Hackathon V2",
+    page_icon="📊",
+    layout = "wide",
+)
 
-# Show different sub-menus based on the main menu selection
-if selected_main_menu == "Home":
-    st.sidebar.subheader("Home Sub-Menu")
-    home_sub_menu = st.sidebar.radio("Select an option", ["Option 1", "Option 2", "Option 3"])
+connection_parameters = {
+       "ACCOUNT":st.secrets["ACCOUNT"],
+        "USER":st.secrets["USER"],
+        "PASSWORD":st.secrets["PASSWORD"],
+        "ROLE":st.secrets["ROLE"],
+        "DATABASE":st.secrets["DATABASE"],
+        "SCHEMA":st.secrets["SCHEMA"],
+        "WAREHOUSE":st.secrets["WAREHOUSE"]
+}
 
-    if home_sub_menu == "Option 1":
-        st.write("Home -> Option 1 selected")
-    elif home_sub_menu == "Option 2":
-        st.write("Home -> Option 2 selected")
-    elif home_sub_menu == "Option 3":
-        st.write("Home -> Option 3 selected")
+session = Session.builder.configs(connection_parameters).create()
 
-elif selected_main_menu == "Settings":
-    st.sidebar.subheader("Settings Sub-Menu")
-    settings_sub_menu = st.sidebar.radio("Select an option", ["Profile", "Privacy", "Notifications"])
 
-    if settings_sub_menu == "Profile":
-        st.write("Settings -> Profile selected")
-    elif settings_sub_menu == "Privacy":
-        st.write("Settings -> Privacy selected")
-    elif settings_sub_menu == "Notifications":
-        st.write("Settings -> Notifications selected")
+# ---------------------------------------
+def get_classification(session,sql_body):
+    prompt2 = f"""
+        You are a SQL translator expert. Your primary job is to identify if a type of SQL statement is DDL or DML or DCL where SQL
+        given between <context> and </context> tags. 
+        Identify if it is DML, DDL or DCL and what kind of database object is created/altered. 
+        Generate JSON output with key/value 
+            stmt_type = DDL or DML
+            object_type = table or view or function
+            operation_type = create or alter
+            schema_name = dbo or sales
+            object_name =table or view or trigger name
+        <context>
+        {sql_body}
+        </context>
+    """
+    cmd = """
+            select snowflake.cortex.complete(?, ?) as response
+          """
+    
+    df_response = session.sql(cmd, params=['snowflake-arctic', prompt2]).collect()
+    return df_response
+# ---------------------------------------
+# Write directly to the app
+st.title("Snowflake LLM V5 (18/5 04PM)")
 
-elif selected_main_menu == "About":
-    st.sidebar.subheader("About Sub-Menu")
-    about_sub_menu = st.sidebar.radio("Select an option", ["Company", "Team", "Contact"])
 
-    if about_sub_menu == "Company":
-        st.write("About -> Company selected")
-    elif about_sub_menu == "Team":
-        st.write("About -> Team selected")
-    elif about_sub_menu == "Contact":
-        st.write("About -> Contact selected")
+#step-2 extract the sql script
+sql_script_query = """
+SELECT 
+    metadata$filename as _stg_sql_file_name,
+    metadata$FILE_LAST_MODIFIED::text as _stg_sql_file_load_ts,
+    metadata$FILE_CONTENT_KEY as _stg_sql_file_md5,
+    t.$1 as sql_script
+FROM 
+    @my_sql (file_format => 'myformat', pattern=>'.*MS-SQL-Server-Script.*[.]sql') t;
+"""
 
-# Main content based on main menu selection
-if selected_main_menu == "Home":
-    st.title("Home")
-    st.write("Welcome to the Home page!")
-elif selected_main_menu == "Settings":
-    st.title("Settings")
-    st.write("Adjust your settings here.")
-elif selected_main_menu == "About":
-    st.title("About")
-    st.write("Learn more about us.")
+sql_script_query_df = session.sql(sql_script_query).collect()
+
+new_df = pd.DataFrame(sql_script_query_df,columns=['SQL_File_Name','Load_Time','MD5','SQL_Body'])
+
+for index, row in new_df.iterrows():
+    file_name = row['SQL_File_Name'].split('/')[-1]
+    load_time = row['Load_Time']
+    md5 = row['MD5']
+    script = row['SQL_Body']
+    st.subheader(file_name)
+    
+    col1, col2 = st.columns(2)
+    with col1:  
+        st.code(script, language='sql' , line_numbers = True)
+    with col2:
+        snowpark_row = get_classification(session,script)
+        for element in snowpark_row:
+            st.write(element.as_dict())
+            json_body = element.as_dict()
+            #st.code(json_body, language='json' , line_numbers = False)
+            nested_json_string = json_body['RESPONSE']
+            
+            # Step 2: Parse the nested JSON string into a dictionary
+            nested_json_object = json.loads(nested_json_string)
+            #st.code(str(nested_json_object))
+            # Step 3: Access individual elements
+            stmt_type_val = nested_json_object['stmt_type']
+            object_type_val = nested_json_object['object_type']
+            operation_type_val = nested_json_object['operation_type']
+            schema_name_val = nested_json_object['schema_name']
+            object_name_val = nested_json_object['object_name']
+            
+            # Print the extracted elements
+            #st.markdown(stmt_type_val)
+            #st.markdown(object_type_val)
+            #st.markdown(operation_type_val)
+            #st.markdown(schema_name_val)
+            #st.markdown(object_name_val)
+
+            insert_sql = f"""
+                insert into migration_script 
+                (   sql_file_name,
+                    sql_body,
+                    _stg_sql_file_name,
+                    _stg_sql_file_load_ts,
+                    _stg_sql_file_md5,
+                    cortex_worked,
+                    cortex_status,
+                    cortex_err_msg,
+                    cortex_response,
+                    stmt_type,
+                    object_type,
+                    operation_type,
+                    schema_name,
+                    object_name
+                )
+                values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """
+
+            param_vals = [
+                            file_name,
+                            script,
+                            row['SQL_File_Name'],
+                            load_time,
+                            md5,
+                            'Yes',
+                            'Completed',
+                            'None',
+                            str(json_body),
+                            stmt_type_val,
+                            object_type_val,
+                            operation_type_val,
+                            schema_name_val,
+                            object_name_val
+                        ]
+
+            #insert into migration_script (sql_file_name,sql_body,_stg_sql_file_name,_stg_sql_file_load_ts,_stg_sql_file_md5) values (?,?,?,?,?)
+
+            session.sql(insert_sql, params=param_vals).collect()
+
+            break
+
+
+
+
+
+
