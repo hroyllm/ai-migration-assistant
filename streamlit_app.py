@@ -247,15 +247,6 @@ if current_tab == "Translate SQL Server to Snowflake":
 
                             # if result is equals to zero, then only insert, else not.
                             if (len(result) == 0 ) :
-                                update migration_script set 
-                                        snowflake_sql_construct = ? , 
-                                        snowflake_object_type = 'Table',
-                                        updated_ts = current_timestamp()
-                                        where
-                                        sql_file_name =  and 
-                                        _stg_sql_file_md5 = ?
-                                
-    
                                 insert_sql = f"""
                                     insert into migration_script 
                                     (   sql_file_name,
