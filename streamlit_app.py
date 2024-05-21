@@ -219,8 +219,9 @@ if current_tab == "Translate SQL Server to Snowflake":
                 
                 
                 col1, col2 = st.columns(2)
+                tab_name = f""" MS SQL Script (File No. {index+1}) """
                 with col1:  
-                    tab01, tab02 = st.tabs(['MS SQL Script',file_name ])
+                    tab01, tab02 = st.tabs([tab_name,file_name ])
                     with tab01:
                         st.code(script, language='sql' , line_numbers = True)
                     with tab02:
