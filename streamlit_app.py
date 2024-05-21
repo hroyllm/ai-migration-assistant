@@ -246,7 +246,7 @@ if current_tab == "Translate SQL Server to Snowflake":
                             result = session.sql(exist_query).collect()
 
                             # if result is equals to zero, then only insert, else not.
-                            if (len(result) = 0 ) :
+                            if (len(result) == 0 ) :
                                 update migration_script set 
                                         snowflake_sql_construct = ? , 
                                         snowflake_object_type = 'Table',
