@@ -144,7 +144,7 @@ classification_done = False
 
 if current_tab == "Translate SQL Server to Snowflake":
     st.markdown('<h1 style="color: #2596be;">Start Your SQL Server To Snowflake Migration Journey</h1>', unsafe_allow_html=True)
-    st.markdown('<h3 style="color: #d45b90ff;">(MS SQL Server Script Exist In Snowflake Stage Location)</h3>', unsafe_allow_html=True)
+    st.markdown('<h5 style="color: #d45b90ff;">[MS SQL Server Script Exist In Snowflake Stage Location]</h5>', unsafe_allow_html=True)
     st.divider()
 
     #db_name, schema_name,stage_name,target_table = 'DEMO','PUBLIC','MY_SQL','MIGRATION_SCRIPT'
@@ -158,7 +158,7 @@ if current_tab == "Translate SQL Server to Snowflake":
     #load all the script with summary
     
     with st.expander("Expand/Collapse", expanded=True):
-        if st.button('Show First 5 MS SQL Scripts (From Snowflake Stage Location)'):
+        if st.button('Show First 5 MS SQL Scripts - From Snowflake Stage Location'):
             sql_script_query = f"""
                                 SELECT 
                                     metadata$filename as _stg_sql_file_name,
@@ -241,45 +241,58 @@ if current_tab == "Translate SQL Server to Snowflake":
                             operation_type_val = nested_json_object['operation_type']
                             schema_name_val = nested_json_object['schema_name']
                             object_name_val = nested_json_object['object_name']
-                            
 
-                            insert_sql = f"""
-                                insert into migration_script 
-                                (   sql_file_name,
-                                    sql_body,
-                                    _stg_sql_file_name,
-                                    _stg_sql_file_load_ts,
-                                    _stg_sql_file_md5,
-                                    cortex_worked,
-                                    cortex_status,
-                                    cortex_err_msg,
-                                    cortex_response,
-                                    stmt_type,
-                                    object_type,
-                                    operation_type,
-                                    schema_name,
-                                    object_name
-                                )
-                                values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-                            """
+                            exist_query = f""" select count(*) from migration_script where sql_file_name = {row['SQL_File_Name']} and _stg_sql_file_md5 = {md5}"""
+                            result = session.sql(exist_query).collect()
 
-                            param_vals = [
-                                            file_name,
-                                            script,
-                                            row['SQL_File_Name'],
-                                            load_time,
-                                            md5,
-                                            'Yes',
-                                            'Completed',
-                                            'None',
-                                            str(json_body),
-                                            stmt_type_val,
-                                            object_type_val,
-                                            operation_type_val,
-                                            schema_name_val,
-                                            object_name_val
-                                        ]
-                            session.sql(insert_sql, params=param_vals).collect()
+                            # if result is equals to zero, then only insert, else not.
+                            if (len(result) = 0 ) :
+                                update migration_script set 
+                                        snowflake_sql_construct = ? , 
+                                        snowflake_object_type = 'Table',
+                                        updated_ts = current_timestamp()
+                                        where
+                                        sql_file_name =  and 
+                                        _stg_sql_file_md5 = ?
+                                
+    
+                                insert_sql = f"""
+                                    insert into migration_script 
+                                    (   sql_file_name,
+                                        sql_body,
+                                        _stg_sql_file_name,
+                                        _stg_sql_file_load_ts,
+                                        _stg_sql_file_md5,
+                                        cortex_worked,
+                                        cortex_status,
+                                        cortex_err_msg,
+                                        cortex_response,
+                                        stmt_type,
+                                        object_type,
+                                        operation_type,
+                                        schema_name,
+                                        object_name
+                                    )
+                                    values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                                """
+    
+                                param_vals = [
+                                                file_name,
+                                                script,
+                                                row['SQL_File_Name'],
+                                                load_time,
+                                                md5,
+                                                'Yes',
+                                                'Completed',
+                                                'None',
+                                                str(json_body),
+                                                stmt_type_val,
+                                                object_type_val,
+                                                operation_type_val,
+                                                schema_name_val,
+                                                object_name_val
+                                            ]
+                                session.sql(insert_sql, params=param_vals).collect()
                         except Exception as e:
                             # Handle exceptions and print an error message
                             print(f"An error occurred: {str(e)}")
