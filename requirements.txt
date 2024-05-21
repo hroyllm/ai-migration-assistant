@@ -1,3 +1,4 @@
 snowflake-connector-python 
 snowflake-snowpark-python 
 replicate
+transformers
