@@ -189,7 +189,7 @@ if current_tab == "Translate SQL Server to Snowflake":
                             """)
     st.divider()
     st.markdown('<h4 style="color: #2596be;">Step-1 MS SQL Server - Object Classification</h4>', unsafe_allow_html=True)
-    st.markdown('<h6 style="color: #ffab40;">[MS SQL Script is passed to Snowflake cortex function for object classification]</h6>', unsafe_allow_html=True)
+    st.markdown('<h6 style="color: #ffab40;">MS SQL Script is passed to Snowflake cortex function for object classification and result comes back in JSON format</h6>', unsafe_allow_html=True)
     with st.expander("Expand/Collapse", expanded=True): 
         if st.button('Run Object Classification Task '):
             sql_script_query = f"""
@@ -293,6 +293,7 @@ if current_tab == "Translate SQL Server to Snowflake":
     # ---------------------
     # Display Stats
     st.markdown('<h4 style="color: #2596be;">Step-2 Object Classification Statistics</h4>', unsafe_allow_html=True)
+    st.markdown('<h6 style="color: #ffab40;">Classified Objects (Table/View etc) are stored in a snowflake table and grouped by to draw the bar chart.</h6>', unsafe_allow_html=True)
     with st.expander("Expand/Collapse", expanded=True): 
         if st.button('Show Stats'):
             col1, col2 = st.columns(2)
