@@ -243,11 +243,16 @@ if current_tab == "Translate SQL Server to Snowflake":
                             schema_name_val = nested_json_object['schema_name']
                             object_name_val = nested_json_object['object_name']
 
-                            exist_query = f""" select count(*) from migration_script where sql_file_name = {row['SQL_File_Name']} and _stg_sql_file_md5 = {md5}"""
+                            exist_query = f""" select count(*) as cnt from migration_script where sql_file_name = '{file_name}' and _stg_sql_file_md5 = '{md5}'"""
+                            print(exist_query)
                             result = session.sql(exist_query).collect()
+                            first_row = result[0].as_dict()
+                            print(first_row)
+                            row_cnt = int(first_row['CNT'])
+                            print(row_cnt)
 
                             # if result is equals to zero, then only insert, else not.
-                            if (len(result) == 0 ) :
+                            if (row_cnt == 0 ) :
                                 insert_sql = f"""
                                     insert into migration_script 
                                     (   sql_file_name,
