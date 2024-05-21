@@ -28,7 +28,7 @@ st.set_page_config(
     }
 )
 
-replicate_api = st.secrets["r8_C8IOWw55ro7WTNNW0qfQpACzp4O335g0Ap0AQ"]
+replicate_api = st.secrets["REPLICATE_API"]
 
 # Create a sidebar with navigation links
 st.sidebar.image('Snowflake_Logomark_blue.svg')
