@@ -144,6 +144,7 @@ classification_done = False
 
 if current_tab == "Translate SQL Server to Snowflake":
     st.markdown('<h1 style="color: #2596be;">Start Your SQL Server To Snowflake Migration Journey</h1>', unsafe_allow_html=True)
+    st.markdown('<h3 style="color: #d45b90ff;">(MS SQL Server Script Exist In Snowflake Stage Location)</h3>', unsafe_allow_html=True)
     st.divider()
 
     #db_name, schema_name,stage_name,target_table = 'DEMO','PUBLIC','MY_SQL','MIGRATION_SCRIPT'
@@ -157,7 +158,7 @@ if current_tab == "Translate SQL Server to Snowflake":
     #load all the script with summary
     
     with st.expander("Expand/Collapse", expanded=True):
-        if st.button('Show First 5 MS SQL Scripts'):
+        if st.button('Show First 5 MS SQL Scripts (From Snowflake Stage Location)'):
             sql_script_query = f"""
                                 SELECT 
                                     metadata$filename as _stg_sql_file_name,
@@ -166,7 +167,7 @@ if current_tab == "Translate SQL Server to Snowflake":
                                     t.$1 as sql_script
                                 FROM 
                                     @demo.public.my_sql (file_format => 'myformat', pattern=>'.*MS-SQL-Server-Script.*[.]sql') t
-                                limit 10;
+                                limit 5;
                                 """
             sql_script_query_df = session.sql(sql_script_query).collect()
 
@@ -186,7 +187,7 @@ if current_tab == "Translate SQL Server to Snowflake":
                             - File Load Time: {load_time}
                             - File MD5: {md5}
                             """)
-
+    st.divider()
     st.markdown('<h4 style="color: #2596be;">Step-1 MS SQL Server - Object Classification</h4>', unsafe_allow_html=True)
     with st.expander("Expand/Collapse", expanded=True): 
         if st.button('Run Object Classification Task '):
