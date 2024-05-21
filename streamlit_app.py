@@ -306,6 +306,7 @@ if current_tab == "Translate SQL Server to Snowflake":
     
     # Generate Table DDLs 
     st.markdown('<h4 style="color: #2596be;">Step-3 Translate Table DDLs to Snowflake</h4>', unsafe_allow_html=True)
+    st.markdown('<h6 style="color: #ffab40;">MS SQL Table DDL Scripts are passed to Snowflake cortex function for Snowflake compatible result is fetched</h6>', unsafe_allow_html=True)
     with st.expander("Expand/Collapse", expanded=True): 
         if st.button('Start SQL Translation For Table DDLs'):
             sql_body_df = helper_table_ddl.get_table_ddl_sql_body(session,25)
@@ -364,6 +365,7 @@ if current_tab == "Translate SQL Server to Snowflake":
     
     # Generate Function DDLs 
     st.markdown('<h4 style="color: #2596be;">Step-4 Translate Function (UDFs) DDLs to Snowflake</h4>', unsafe_allow_html=True)
+    st.markdown('<h6 style="color: #ffab40;">MS SQL UDF DDL Scripts are passed to Snowflake cortex function for Snowflake compatible result is fetched</h6>', unsafe_allow_html=True)
     with st.expander("Expand/Collaps", expanded=True):     
         if st.button('Start SQL Translation For Function DDLs'):
             sql_body_df = helper_function_ddl.get_function_ddl_sql_body(session,5)
@@ -410,6 +412,7 @@ if current_tab == "Translate SQL Server to Snowflake":
     # Generate View DDLs 
 
     st.markdown('<h4 style="color: #2596be;">Step-5 Translate View DDLs to Snowflake</h4>', unsafe_allow_html=True)
+    st.markdown('<h6 style="color: #ffab40;">MS SQL View DDL Scripts are passed to Snowflake cortex function for Snowflake compatible result is fetched</h6>', unsafe_allow_html=True)
     with st.expander("Expand/Collaps", expanded=True):     
         if st.button('Start SQL Translation For View DDLs'):
             sql_body_df = helper_view_ddl.get_view_ddl_sql_body(session,0)
@@ -471,6 +474,7 @@ if current_tab == "Translate SQL Server to Snowflake":
     # Generate Trigger DDLs
 
     st.markdown('<h4 style="color: #2596be;">Step-6 Translate Trigger DDLs to Snowflake</h4>', unsafe_allow_html=True)
+    st.markdown('<h6 style="color: #ffab40;">MS SQL Trigger DDL Scripts are passed to Snowflake cortex function for Snowflake compatible result is fetched</h6>', unsafe_allow_html=True)
     with st.expander("Expand/Collaps", expanded=True):    
         if st.button('Start SQL Translation For Trigger DDLs'):
             sql_body_df = helper_trigger_ddl.get_trigger_ddl_sql_body(session,5)
@@ -525,6 +529,7 @@ if current_tab == "Translate SQL Server to Snowflake":
 
     # Generate Constraints DDL using alter
     st.markdown('<h4 style="color: #2596be;">Step-7: Translate Consraints SQL Scripts to Snowflake</h4>', unsafe_allow_html=True)
+    st.markdown('<h6 style="color: #ffab40;">MS SQL Consraints Alter Scripts are passed to Snowflake cortex function for Snowflake compatible result is fetched</h6>', unsafe_allow_html=True)
     with st.expander("Expand/Collaps", expanded=True):       
         if st.button('Translate Consraints'):
             
