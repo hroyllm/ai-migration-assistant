@@ -189,6 +189,7 @@ if current_tab == "Translate SQL Server to Snowflake":
                             """)
     st.divider()
     st.markdown('<h4 style="color: #2596be;">Step-1 MS SQL Server - Object Classification</h4>', unsafe_allow_html=True)
+    st.markdown('<h6 style="color: #ffab40;">[MS SQL Script is passed to Snowflake cortex function for object classification]</h6>', unsafe_allow_html=True)
     with st.expander("Expand/Collapse", expanded=True): 
         if st.button('Run Object Classification Task '):
             sql_script_query = f"""
