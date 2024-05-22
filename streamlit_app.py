@@ -28,7 +28,8 @@ st.set_page_config(
     }
 )
 
-replicate_api = st.secrets["REPLICATE_API"]
+if 'api_token' not in st.session_state:
+    st.session_state.api_token = None
 
 # Create a sidebar with navigation links
 st.sidebar.image('Snowflake_Logomark_blue.svg')
@@ -110,6 +111,15 @@ def generate_arctic_response():
 if current_tab == "Ask Arctic About Platform Migration":
     st.markdown('<h1 style="color: #2596be;">Data Migration: Ask The AI Experts Anything</h1>', unsafe_allow_html=True)
     st.markdown('<h4 style="color: #2596be;">LLM Chatbot Build Using Snowflake/Arctic Foundational Model</h4>', unsafe_allow_html=True)
+
+    api_token = st.text_input("Enter your Replicate.com API token to start your chat", type="password")
+    if st.button("Submit"):
+        if api_token:
+            st.session_state.api_token = api_token
+            st.success("API token saved successfully!")
+        else:
+            st.error("Please enter a valid API token.")
+            
     st.divider()
     if "messages" not in st.session_state.keys():
         st.session_state.messages = [{"role": "assistant", "content": "Hi. I am Data Migration AI Assistant, build on the top of Snowflake/Arctic LLM Foundation Model.Ask me anything about Legacy to Modern Data Platform migration challenges."}]
@@ -119,12 +129,15 @@ if current_tab == "Ask Arctic About Platform Migration":
         with st.chat_message(message["role"], avatar=icons[message["role"]]):
             st.write(message["content"])
 
-    # User-provided prompt
-    if prompt := st.chat_input(disabled=not replicate_api):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user", avatar="⛷️"):
-            st.write(prompt)
-
+    # Chat input, disabled if api_token is not available
+    if st.session_state['api_token']:
+        prompt = st.chat_input(disabled=False)
+        if prompt:
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user", avatar="⛷️"):
+                st.write(prompt)
+    else:
+        st.chat_input(disabled=True)
 
     # Generate a new response if last message is not from assistant
     if st.session_state.messages[-1]["role"] != "assistant":
